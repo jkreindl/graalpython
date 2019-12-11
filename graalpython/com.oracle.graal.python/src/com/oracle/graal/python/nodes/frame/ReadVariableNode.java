@@ -29,12 +29,15 @@ import static com.oracle.graal.python.nodes.frame.FrameSlotIDs.RETURN_SLOT_ID;
 import static com.oracle.graal.python.runtime.exception.PythonErrorType.UnboundLocalError;
 
 import com.oracle.graal.python.builtins.objects.PNone;
+import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.PRaiseNode;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
@@ -95,5 +98,16 @@ public abstract class ReadVariableNode extends FrameSlotNode implements ReadLoca
     @Override
     public final double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
         return readLocalNode.executeDouble(getAccessingFrame(frame));
+    }
+
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return tag == AnalysisTags.ReadVariableTag.class || super.hasTag(tag);
+    }
+
+    @Override
+    @CompilerDirectives.TruffleBoundary
+    public Object getNodeObject() {
+        return PNodeObject.create(AnalysisTags.ReadVariableTag.METADATA_KEY_NAME, String.valueOf(frameSlot.getIdentifier()));
     }
 }
