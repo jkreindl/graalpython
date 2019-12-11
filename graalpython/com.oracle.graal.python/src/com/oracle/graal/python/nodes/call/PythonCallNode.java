@@ -49,6 +49,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.interop.ArityException;
@@ -289,7 +290,7 @@ public abstract class PythonCallNode extends ExpressionNode {
     }
 
     private static boolean isCall(Class<?> tag) {
-        return tag == StandardTags.CallTag.class;
+        return tag == StandardTags.CallTag.class || tag == AnalysisTags.FunctionCallTag.class;
     }
 
     private boolean isBreakpoint(Class<?> tag) {
