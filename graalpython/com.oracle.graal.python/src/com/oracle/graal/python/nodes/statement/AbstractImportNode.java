@@ -60,6 +60,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 
@@ -163,6 +164,6 @@ public abstract class AbstractImportNode extends StatementNode {
 
     @Override
     public boolean hasTag(Class<? extends Tag> tag) {
-        return tag == StandardTags.CallTag.class || super.hasTag(tag);
+        return tag == StandardTags.CallTag.class || tag == AnalysisTags.FunctionCallTag.class || super.hasTag(tag);
     }
 }

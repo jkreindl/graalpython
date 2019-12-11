@@ -86,6 +86,7 @@ import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExecutableNode;
@@ -114,7 +115,8 @@ import com.oracle.truffle.api.source.SourceSection;
                 StandardTags.ExpressionTag.class,
                 StandardTags.ReadVariableTag.class,
                 StandardTags.WriteVariableTag.class,
-                DebuggerTags.AlwaysHalt.class
+                DebuggerTags.AlwaysHalt.class,
+                AnalysisTags.FunctionCallTag.class
 })
 public final class PythonLanguage extends TruffleLanguage<PythonContext> {
     public static final String ID = "python";
