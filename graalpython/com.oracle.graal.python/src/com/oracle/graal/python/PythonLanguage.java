@@ -111,6 +111,7 @@ import org.graalvm.options.OptionValues;
                 AnalysisTags.FunctionCallTag.class, //
                 AnalysisTags.ReadVariableTag.class, //
                 AnalysisTags.WriteVariableTag.class, //
+                AnalysisTags.LiteralTag.class, //
 })
 public final class PythonLanguage extends TruffleLanguage<PythonContext> {
     public static final String ID = "python";

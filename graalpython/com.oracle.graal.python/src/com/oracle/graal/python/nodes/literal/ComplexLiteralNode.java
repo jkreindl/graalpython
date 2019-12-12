@@ -26,7 +26,9 @@
 package com.oracle.graal.python.nodes.literal;
 
 import com.oracle.graal.python.builtins.objects.complex.PComplex;
+import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
 
 public final class ComplexLiteralNode extends LiteralNode {
     private final PComplex value;
@@ -42,5 +44,10 @@ public final class ComplexLiteralNode extends LiteralNode {
     @Override
     public Object execute(VirtualFrame frame) {
         return value;
+    }
+
+    @Override
+    public Object getNodeObject() {
+        return PNodeObject.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.ObjectLiteral.name());
     }
 }

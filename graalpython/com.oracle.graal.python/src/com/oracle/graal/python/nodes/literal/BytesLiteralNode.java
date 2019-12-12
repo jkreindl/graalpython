@@ -27,9 +27,11 @@ package com.oracle.graal.python.nodes.literal;
 
 import java.util.Arrays;
 
+import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.runtime.object.PythonObjectFactory;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
 
 public final class BytesLiteralNode extends LiteralNode {
     @Child private PythonObjectFactory factory = PythonObjectFactory.create();
@@ -42,5 +44,10 @@ public final class BytesLiteralNode extends LiteralNode {
     @Override
     public Object execute(VirtualFrame frame) {
         return factory.createBytes(Arrays.copyOf(value, value.length));
+    }
+
+    @Override
+    public Object getNodeObject() {
+        return PNodeObject.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.ArrayLiteral.name());
     }
 }

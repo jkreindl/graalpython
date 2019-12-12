@@ -26,7 +26,16 @@
 package com.oracle.graal.python.nodes.literal;
 
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 
 public abstract class LiteralNode extends ExpressionNode {
 
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return tag == AnalysisTags.LiteralTag.class || super.hasTag(tag);
+    }
+
+    @Override
+    public abstract Object getNodeObject();
 }

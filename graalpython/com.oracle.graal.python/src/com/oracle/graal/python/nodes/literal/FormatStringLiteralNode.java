@@ -42,10 +42,12 @@
 package com.oracle.graal.python.nodes.literal;
 
 import com.oracle.graal.python.PythonLanguage;
+import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
 import com.oracle.graal.python.runtime.PythonParser;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
@@ -514,5 +516,10 @@ public class FormatStringLiteralNode extends LiteralNode {
         Source source = Source.newBuilder(PythonLanguage.ID, src, "<fstring>").build();
         Node expression = parser.parse(PythonParser.ParserMode.InlineEvaluation, PythonLanguage.getCore(), source, frame);
         return (ExpressionNode) expression;
+    }
+
+    @Override
+    public Object getNodeObject() {
+        return PNodeObject.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.FormatStringLiteral.name());
     }
 }
