@@ -26,9 +26,12 @@
 package com.oracle.graal.python.nodes.control;
 
 import com.oracle.graal.python.nodes.PNode;
+import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.statement.StatementNode;
 import com.oracle.graal.python.runtime.exception.ReturnException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 
 public class ReturnNode extends StatementNode {
 
@@ -53,5 +56,15 @@ public class ReturnNode extends StatementNode {
             right.executeVoid(frame);
             throw ReturnException.INSTANCE;
         }
+    }
+
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return tag == AnalysisTags.ControlFlowBranchTag.class || super.hasTag(tag);
+    }
+
+    @Override
+    public Object getNodeObject() {
+        return PNodeObject.create(AnalysisTags.ControlFlowBranchTag.METADATA_KEY_TYPE, AnalysisTags.ControlFlowBranchTag.Type.Return.name());
     }
 }
