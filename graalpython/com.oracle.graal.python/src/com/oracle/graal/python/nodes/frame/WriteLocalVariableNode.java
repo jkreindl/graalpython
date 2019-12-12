@@ -187,12 +187,12 @@ public abstract class WriteLocalVariableNode extends StatementNode implements Wr
 
     @Override
     public boolean hasTag(Class<? extends Tag> tag) {
-        return tag == AnalysisTags.ReadVariableTag.class || super.hasTag(tag);
+        return tag == AnalysisTags.WriteVariableTag.class || super.hasTag(tag);
     }
 
     @Override
     @CompilerDirectives.TruffleBoundary
     public Object getNodeObject() {
-        return PNodeObject.create(AnalysisTags.ReadVariableTag.METADATA_KEY_NAME, String.valueOf(getSlot()));
+        return PNodeObject.create(AnalysisTags.WriteVariableTag.METADATA_KEY_NAME, String.valueOf(getSlot().getIdentifier()));
     }
 }
