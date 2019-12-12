@@ -34,6 +34,7 @@ import com.oracle.graal.python.builtins.objects.common.HashingStorageNodes;
 import com.oracle.graal.python.builtins.objects.common.SequenceStorageNodes;
 import com.oracle.graal.python.builtins.objects.ints.PInt;
 import com.oracle.graal.python.builtins.objects.set.PBaseSet;
+import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.PRaiseNode;
 import com.oracle.graal.python.nodes.call.special.LookupAndCallUnaryNode;
 import com.oracle.graal.python.nodes.expression.CastToBooleanNodeFactory.NotNodeGen;
@@ -44,8 +45,10 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 @GenerateWrapper
@@ -220,6 +223,16 @@ public abstract class CastToBooleanNode extends UnaryOpNode {
                 lenNode = insert(SequenceStorageNodes.LenNode.create());
             }
             return lenNode.execute(s);
+        }
+
+        @Override
+        public boolean hasTag(Class<? extends Tag> tag) {
+            return tag == AnalysisTags.UnaryOperationTag.class || super.hasTag(tag);
+        }
+
+        @Override
+        public Object getNodeObject() {
+            return PNodeObject.create(AnalysisTags.UnaryOperationTag.METADATA_KEY_OPERATOR, "!");
         }
     }
 }
