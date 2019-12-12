@@ -28,6 +28,7 @@ package com.oracle.graal.python.nodes.call;
 import com.oracle.graal.python.builtins.objects.function.PKeyword;
 import com.oracle.graal.python.nodes.BuiltinNames;
 import com.oracle.graal.python.nodes.EmptyNode;
+import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.PRaiseNode;
 import com.oracle.graal.python.nodes.argument.keywords.KeywordArgumentsNode;
 import com.oracle.graal.python.nodes.argument.positional.PositionalArgumentsNode;
@@ -295,5 +296,10 @@ public abstract class PythonCallNode extends ExpressionNode {
 
     private boolean isBreakpoint(Class<?> tag) {
         return tag == DebuggerTags.AlwaysHalt.class && calleeName.equals(BuiltinNames.BREAKPOINT);
+    }
+
+    @Override
+    public Object getNodeObject() {
+        return PNodeObject.create(AnalysisTags.FunctionCallTag.METADATA_KEY_IS_PREFIX_CALLING, false, AnalysisTags.FunctionCallTag.METADATA_KEY_ARG_OFFSET, 1);
     }
 }
