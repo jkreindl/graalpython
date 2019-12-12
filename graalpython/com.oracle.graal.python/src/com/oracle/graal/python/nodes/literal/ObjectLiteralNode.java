@@ -26,7 +26,9 @@
 package com.oracle.graal.python.nodes.literal;
 
 import com.oracle.graal.python.builtins.objects.ints.PInt;
+import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 @NodeInfo(shortName = "object")
@@ -49,5 +51,10 @@ public final class ObjectLiteralNode extends LiteralNode {
 
     public Object getObject() {
         return object;
+    }
+
+    @Override
+    public Object getNodeObject() {
+        return PNodeObject.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.ObjectLiteral.name());
     }
 }

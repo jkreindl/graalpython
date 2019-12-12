@@ -116,7 +116,8 @@ import com.oracle.truffle.api.source.SourceSection;
                 StandardTags.ReadVariableTag.class,
                 StandardTags.WriteVariableTag.class,
                 DebuggerTags.AlwaysHalt.class,
-                AnalysisTags.FunctionCallTag.class
+                AnalysisTags.FunctionCallTag.class,
+                AnalysisTags.LiteralTag.class
 })
 public final class PythonLanguage extends TruffleLanguage<PythonContext> {
     public static final String ID = "python";

@@ -40,11 +40,13 @@
  */
 package com.oracle.graal.python.nodes.literal;
 
+import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.expression.CastToListExpressionNode;
 import com.oracle.graal.python.nodes.expression.CastToListExpressionNodeGen;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
 import com.oracle.graal.python.runtime.sequence.storage.SequenceStorage;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
 
 public final class StarredExpressionNode extends LiteralNode {
     @Child private CastToListExpressionNode childNode;
@@ -68,5 +70,10 @@ public final class StarredExpressionNode extends LiteralNode {
     @Override
     public Object execute(VirtualFrame frame) {
         return childNode.execute(frame);
+    }
+
+    @Override
+    public Object getNodeObject() {
+        return PNodeObject.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.ArrayLiteral.name());
     }
 }
