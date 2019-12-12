@@ -19,10 +19,12 @@ import java.util.Map;
 @ExportLibrary(InteropLibrary.class)
 public final class PNodeObject implements TruffleObject {
 
+    @TruffleBoundary
     public static PNodeObject create(String key, Object value) {
         return new PNodeObject(Collections.singletonMap(key, value));
     }
 
+    @TruffleBoundary
     public static PNodeObject create(String key1, Object value1, String key2, Object value2) {
         final HashMap<String, Object> data = new HashMap<>();
         data.put(key1, value1);
