@@ -31,6 +31,7 @@ import static com.oracle.graal.python.runtime.exception.PythonErrorType.TypeErro
 import com.oracle.graal.python.builtins.objects.PNone;
 import com.oracle.graal.python.builtins.objects.exception.PBaseException;
 import com.oracle.graal.python.builtins.objects.type.PythonAbstractClass;
+import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.PRaiseNode;
 import com.oracle.graal.python.nodes.SpecialAttributeNames;
 import com.oracle.graal.python.nodes.attributes.WriteAttributeToObjectNode;
@@ -42,6 +43,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
@@ -116,5 +119,15 @@ public abstract class RaiseNode extends StatementNode {
 
     public static RaiseNode create(ExpressionNode type, ExpressionNode cause) {
         return RaiseNodeGen.create(type, cause);
+    }
+
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return tag == AnalysisTags.ControlFlowBranchTag.class || super.hasTag(tag);
+    }
+
+    @Override
+    public Object getNodeObject() {
+        return PNodeObject.create(AnalysisTags.ControlFlowBranchTag.METADATA_KEY_TYPE, AnalysisTags.ControlFlowBranchTag.Type.Throw.name());
     }
 }

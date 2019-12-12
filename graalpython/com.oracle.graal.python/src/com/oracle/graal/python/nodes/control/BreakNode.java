@@ -25,9 +25,12 @@
  */
 package com.oracle.graal.python.nodes.control;
 
+import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.statement.StatementNode;
 import com.oracle.graal.python.runtime.exception.BreakException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 @NodeInfo(shortName = "break")
@@ -36,5 +39,15 @@ public final class BreakNode extends StatementNode {
     @Override
     public void executeVoid(VirtualFrame frame) {
         throw BreakException.INSTANCE;
+    }
+
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return tag == AnalysisTags.ControlFlowBranchTag.class || super.hasTag(tag);
+    }
+
+    @Override
+    public Object getNodeObject() {
+        return PNodeObject.create(AnalysisTags.ControlFlowBranchTag.METADATA_KEY_TYPE, AnalysisTags.ControlFlowBranchTag.Type.Break.name());
     }
 }
