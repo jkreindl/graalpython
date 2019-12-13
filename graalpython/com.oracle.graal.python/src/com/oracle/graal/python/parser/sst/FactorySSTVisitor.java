@@ -1135,9 +1135,6 @@ public class FactorySSTVisitor implements SSTreeVisitor<PNode> {
     @Override
     public PNode visit(SubscriptSSTNode node) {
         ExpressionNode receiver = (ExpressionNode) node.receiver.accept(this);
-        if (receiver instanceof ReadNode) {
-            receiver.assignSourceSection(null);
-        }
         ExpressionNode subscript = (ExpressionNode) node.subscript.accept(this);
         PNode result = nodeFactory.createSubscriptLoad(receiver, subscript);
         result.assignSourceSection(createSourceSection(node.startOffset, node.endOffset));
