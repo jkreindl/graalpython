@@ -300,6 +300,6 @@ public abstract class PythonCallNode extends ExpressionNode {
 
     @Override
     public Object getNodeObject() {
-        return PNodeObject.create(AnalysisTags.FunctionCallTag.METADATA_KEY_IS_PREFIX_CALLING, false, AnalysisTags.FunctionCallTag.METADATA_KEY_ARG_OFFSET, 1);
+        return InteropMap.create(AnalysisTags.FunctionCallTag.METADATA_KEY_IS_PREFIX_CALLING, false, AnalysisTags.FunctionCallTag.METADATA_KEY_ARG_OFFSET, 1, AnalysisTags.FunctionCallTag.METADATA_KEY_ARGUMENT_COUNT, argumentNodes == null ? 0 : argumentNodes.length);
     }
 }
