@@ -26,10 +26,10 @@
 package com.oracle.graal.python.nodes.frame;
 
 import com.oracle.graal.python.builtins.objects.ints.PInt;
-import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
 import com.oracle.graal.python.nodes.frame.WriteLocalVariableNodeGen.WriteLocalFrameSlotNodeGen;
 import com.oracle.graal.python.nodes.statement.StatementNode;
+import com.oracle.graal.python.runtime.interop.InteropMap;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -193,6 +193,6 @@ public abstract class WriteLocalVariableNode extends StatementNode implements Wr
     @Override
     @CompilerDirectives.TruffleBoundary
     public Object getNodeObject() {
-        return PNodeObject.create(AnalysisTags.WriteVariableTag.METADATA_KEY_NAME, String.valueOf(getSlot().getIdentifier()));
+        return InteropMap.create(AnalysisTags.WriteVariableTag.METADATA_KEY_NAME, String.valueOf(getSlot().getIdentifier()));
     }
 }

@@ -32,8 +32,8 @@ import com.oracle.graal.python.builtins.objects.common.SequenceStorageNodes.List
 import com.oracle.graal.python.builtins.objects.list.PList;
 import com.oracle.graal.python.builtins.objects.tuple.PTuple;
 import com.oracle.graal.python.nodes.PNode;
-import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
+import com.oracle.graal.python.runtime.interop.InteropMap;
 import com.oracle.graal.python.runtime.object.PythonObjectFactory;
 import com.oracle.graal.python.runtime.sequence.storage.DoubleSequenceStorage;
 import com.oracle.graal.python.runtime.sequence.storage.IntSequenceStorage;
@@ -232,6 +232,6 @@ public final class ListLiteralNode extends LiteralNode {
 
     @Override
     public Object getNodeObject() {
-        return PNodeObject.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.ArrayLiteral.name());
+        return InteropMap.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.ArrayLiteral.name());
     }
 }

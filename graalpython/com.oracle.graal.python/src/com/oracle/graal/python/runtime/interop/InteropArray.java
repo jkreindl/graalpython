@@ -41,10 +41,13 @@
 package com.oracle.graal.python.runtime.interop;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+
+import java.util.Arrays;
 
 @ExportLibrary(InteropLibrary.class)
 public final class InteropArray implements TruffleObject {
@@ -73,5 +76,11 @@ public final class InteropArray implements TruffleObject {
     @ExportMessage
     boolean isArrayElementReadable(long idx) {
         return idx < array.length;
+    }
+
+    @Override
+    @TruffleBoundary
+    public String toString() {
+        return Arrays.toString(array);
     }
 }

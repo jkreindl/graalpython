@@ -25,9 +25,9 @@
  */
 package com.oracle.graal.python.nodes.control;
 
-import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.expression.CastToBooleanNode;
 import com.oracle.graal.python.nodes.statement.StatementNode;
+import com.oracle.graal.python.runtime.interop.InteropMap;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.AnalysisTags;
 import com.oracle.truffle.api.instrumentation.Tag;
@@ -72,6 +72,6 @@ public final class IfNode extends StatementNode {
 
     @Override
     public Object getNodeObject() {
-        return PNodeObject.create(AnalysisTags.ControlFlowBranchTag.METADATA_KEY_TYPE, AnalysisTags.ControlFlowBranchTag.Type.Condition.name());
+        return InteropMap.create(AnalysisTags.ControlFlowBranchTag.METADATA_KEY_TYPE, AnalysisTags.ControlFlowBranchTag.Type.Condition.name());
     }
 }

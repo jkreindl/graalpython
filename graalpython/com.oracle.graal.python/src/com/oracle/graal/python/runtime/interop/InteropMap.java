@@ -40,8 +40,10 @@
  */
 package com.oracle.graal.python.runtime.interop;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.oracle.graal.python.builtins.objects.common.HashingStorage.DictEntry;
 import com.oracle.graal.python.builtins.objects.dict.PDict;
@@ -49,6 +51,7 @@ import com.oracle.graal.python.builtins.objects.object.PythonObject;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
@@ -72,8 +75,10 @@ public final class InteropMap implements TruffleObject {
 
     @ExportMessage(name = "readMember")
     @TruffleBoundary
-    Object getKey(String name) {
-        assert hasKey(name);
+    Object getKey(String name) throws UnknownIdentifierException {
+        if (!hasKey(name)) {
+            throw UnknownIdentifierException.create(name);
+        }
         return data.get(name);
     }
 
@@ -87,6 +92,21 @@ public final class InteropMap implements TruffleObject {
     @TruffleBoundary
     TruffleObject getKeys(@SuppressWarnings("unused") boolean includeInternal) {
         return new InteropArray(data.keySet().toArray());
+    }
+
+    @Override
+    @TruffleBoundary
+    public String toString() {
+        return data.keySet().stream().map(key -> String.format("\"%s\": %s", key, toString(data.get(key)))).collect(Collectors.joining(", ", "{", "}"));
+    }
+
+    @TruffleBoundary
+    private static String toString(Object value) {
+        if (value instanceof Number || value instanceof Boolean || value instanceof Character) {
+            return String.valueOf(value);
+        } else {
+            return String.format("\"%s\"", value);
+        }
     }
 
     @TruffleBoundary
@@ -105,5 +125,27 @@ public final class InteropMap implements TruffleObject {
             map.put(name, globals.getAttribute(name));
         }
         return new InteropMap(map);
+    }
+
+    @TruffleBoundary
+    public static InteropMap create(String key, Object value) {
+        return new InteropMap(Collections.singletonMap(key, value));
+    }
+
+    @TruffleBoundary
+    public static InteropMap create(String key1, Object value1, String key2, Object value2) {
+        final HashMap<String, Object> data = new HashMap<>();
+        data.put(key1, value1);
+        data.put(key2, value2);
+        return new InteropMap(data);
+    }
+
+    @TruffleBoundary
+    public static InteropMap create(String key1, Object value1, String key2, Object value2, String key3, Object value3) {
+        final HashMap<String, Object> data = new HashMap<>();
+        data.put(key1, value1);
+        data.put(key2, value2);
+        data.put(key3, value3);
+        return new InteropMap(data);
     }
 }

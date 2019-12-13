@@ -34,12 +34,12 @@ import com.oracle.graal.python.builtins.objects.common.HashingStorageNodes;
 import com.oracle.graal.python.builtins.objects.common.SequenceStorageNodes;
 import com.oracle.graal.python.builtins.objects.ints.PInt;
 import com.oracle.graal.python.builtins.objects.set.PBaseSet;
-import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.PRaiseNode;
 import com.oracle.graal.python.nodes.call.special.LookupAndCallUnaryNode;
 import com.oracle.graal.python.nodes.expression.CastToBooleanNodeFactory.NotNodeGen;
 import com.oracle.graal.python.nodes.expression.CastToBooleanNodeFactory.YesNodeGen;
 import com.oracle.graal.python.nodes.object.IsBuiltinClassProfile;
+import com.oracle.graal.python.runtime.interop.InteropMap;
 import com.oracle.graal.python.runtime.sequence.storage.SequenceStorage;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -232,7 +232,7 @@ public abstract class CastToBooleanNode extends UnaryOpNode {
 
         @Override
         public Object getNodeObject() {
-            return PNodeObject.create(AnalysisTags.UnaryOperationTag.METADATA_KEY_OPERATOR, "!");
+            return InteropMap.create(AnalysisTags.UnaryOperationTag.METADATA_KEY_OPERATOR, "!");
         }
     }
 }
