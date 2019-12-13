@@ -52,11 +52,14 @@ import com.oracle.graal.python.nodes.frame.ReadNode;
 import com.oracle.graal.python.nodes.object.IsBuiltinClassProfile;
 import com.oracle.graal.python.nodes.statement.StatementNode;
 import com.oracle.graal.python.runtime.exception.PException;
+import com.oracle.graal.python.runtime.interop.InteropMap;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
@@ -107,6 +110,16 @@ public abstract class GetAttributeNode extends ExpressionNode implements ReadNod
     }
 
     public abstract ExpressionNode getObject();
+
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return tag == AnalysisTags.ReadPropertyTag.class || super.hasTag(tag);
+    }
+
+    @Override
+    public Object getNodeObject() {
+        return InteropMap.create(AnalysisTags.ReadPropertyTag.METADATA_KEY_PROPERTY_NAME, getFixedAttributeNode.getKey());
+    }
 
     public abstract static class GetFixedAttributeNode extends Node {
 
