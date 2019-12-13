@@ -148,4 +148,14 @@ public final class InteropMap implements TruffleObject {
         data.put(key3, value3);
         return new InteropMap(data);
     }
+
+    @TruffleBoundary
+    public static InteropMap create(String key1, Object value1, String key2, Object value2, String key3, Object value3, String key4, Object value4) {
+        final HashMap<String, Object> data = new HashMap<>();
+        data.put(key1, value1);
+        data.put(key2, value2);
+        data.put(key3, value3);
+        data.put(key4, value4);
+        return new InteropMap(data);
+    }
 }

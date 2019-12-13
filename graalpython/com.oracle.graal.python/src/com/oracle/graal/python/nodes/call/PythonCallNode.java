@@ -43,7 +43,9 @@ import com.oracle.graal.python.nodes.frame.ReadGlobalOrBuiltinNode;
 import com.oracle.graal.python.nodes.frame.ReadNameNode;
 import com.oracle.graal.python.nodes.interop.PForeignToPTypeNode;
 import com.oracle.graal.python.runtime.exception.PythonErrorType;
+import com.oracle.graal.python.runtime.interop.InteropArray;
 import com.oracle.graal.python.runtime.interop.InteropMap;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -60,6 +62,8 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
 @NodeChild("calleeNode")
@@ -99,6 +103,7 @@ public abstract class PythonCallNode extends ExpressionNode {
             calleeName = ((ReadNameNode) calleeNode).getAttributeId();
         } else if (calleeNode instanceof GetAttributeNode) {
             getCallableNode = GetCallAttributeNodeGen.create(((GetAttributeNode) calleeNode).getKey(), ((GetAttributeNode) calleeNode).getObject());
+            calleeName = ((GetAttributeNode) calleeNode).getKey();
         }
         KeywordArgumentsNode keywordArgumentsNode = kwArgs == null && keywords.length == 0 ? null : KeywordArgumentsNode.create(keywords, kwArgs);
         if (starArgs == null) {
@@ -223,13 +228,47 @@ public abstract class PythonCallNode extends ExpressionNode {
         }
     }
 
-    protected static final class ForeignInvoke {
+    @ExportLibrary(InteropLibrary.class)
+    protected static final class ForeignInvoke implements TruffleObject {
         private final TruffleObject receiver;
         private final String identifier;
 
         public ForeignInvoke(TruffleObject object, String key) {
             this.receiver = object;
             this.identifier = key;
+        }
+
+        @ExportMessage
+        @SuppressWarnings("static-method")
+        public boolean hasMembers() {
+            return true;
+        }
+
+        @ExportMessage
+        @SuppressWarnings("static-method")
+        public Object getMembers(@SuppressWarnings("unused") boolean includeInternal) {
+            return new InteropArray(new Object[]{"name"});
+        }
+
+        @ExportMessage
+        @SuppressWarnings("static-method")
+        public boolean isMemberReadable(String member) {
+            return "name".equals(member);
+        }
+
+        @ExportMessage
+        public Object readMember(String member) throws UnknownIdentifierException {
+            if ("name".equals(member)) {
+                return identifier;
+            }
+
+            CompilerDirectives.transferToInterpreter();
+            throw UnknownIdentifierException.create(member);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("<foreign invoke %s on %s>", identifier, receiver);
         }
     }
 
@@ -300,6 +339,6 @@ public abstract class PythonCallNode extends ExpressionNode {
 
     @Override
     public Object getNodeObject() {
-        return InteropMap.create(AnalysisTags.FunctionCallTag.METADATA_KEY_IS_PREFIX_CALLING, false, AnalysisTags.FunctionCallTag.METADATA_KEY_ARG_OFFSET, 1, AnalysisTags.FunctionCallTag.METADATA_KEY_ARGUMENT_COUNT, argumentNodes == null ? 0 : argumentNodes.length);
+        return InteropMap.create(AnalysisTags.FunctionCallTag.METADATA_KEY_IS_PREFIX_CALLING, false, AnalysisTags.FunctionCallTag.METADATA_KEY_ARG_OFFSET, 1, AnalysisTags.FunctionCallTag.METADATA_KEY_ARGUMENT_COUNT, argumentNodes == null ? 0 : argumentNodes.length, AnalysisTags.FunctionCallTag.METADATA_KEY_CALLEE_NAME, calleeName);
     }
 }
