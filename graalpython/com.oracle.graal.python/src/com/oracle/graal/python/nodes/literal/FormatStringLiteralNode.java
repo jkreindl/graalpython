@@ -45,9 +45,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.oracle.graal.python.PythonLanguage;
-import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
 import com.oracle.graal.python.runtime.PythonParser;
+import com.oracle.graal.python.runtime.interop.InteropMap;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.AnalysisTags;
@@ -519,6 +519,6 @@ public class FormatStringLiteralNode extends LiteralNode {
 
     @Override
     public Object getNodeObject() {
-        return PNodeObject.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.FormatStringLiteral.name());
+        return InteropMap.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.FormatStringLiteral.name());
     }
 }

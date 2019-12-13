@@ -32,8 +32,8 @@ import com.oracle.graal.python.builtins.objects.common.SequenceStorageNodes;
 import com.oracle.graal.python.builtins.objects.dict.PDict;
 import com.oracle.graal.python.builtins.objects.set.PSet;
 import com.oracle.graal.python.nodes.PNode;
-import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
+import com.oracle.graal.python.runtime.interop.InteropMap;
 import com.oracle.graal.python.runtime.object.PythonObjectFactory;
 import com.oracle.graal.python.runtime.sequence.storage.SequenceStorage;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -130,6 +130,6 @@ public final class SetLiteralNode extends LiteralNode {
 
     @Override
     public Object getNodeObject() {
-        return PNodeObject.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.ObjectLiteral.name());
+        return InteropMap.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.ObjectLiteral.name());
     }
 }

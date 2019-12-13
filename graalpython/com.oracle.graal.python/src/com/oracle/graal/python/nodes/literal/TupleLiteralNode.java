@@ -29,8 +29,8 @@ import com.oracle.graal.python.builtins.objects.common.SequenceStorageNodes;
 import com.oracle.graal.python.builtins.objects.common.SequenceStorageNodes.ListGeneralizationNode;
 import com.oracle.graal.python.builtins.objects.tuple.PTuple;
 import com.oracle.graal.python.nodes.PNode;
-import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
+import com.oracle.graal.python.runtime.interop.InteropMap;
 import com.oracle.graal.python.runtime.object.PythonObjectFactory;
 import com.oracle.graal.python.runtime.sequence.storage.BoolSequenceStorage;
 import com.oracle.graal.python.runtime.sequence.storage.ByteSequenceStorage;
@@ -152,6 +152,6 @@ public final class TupleLiteralNode extends SequenceLiteralNode {
 
     @Override
     public Object getNodeObject() {
-        return PNodeObject.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.ArrayLiteral.name());
+        return InteropMap.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.ArrayLiteral.name());
     }
 }

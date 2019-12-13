@@ -27,10 +27,10 @@ package com.oracle.graal.python.nodes.expression;
 
 import com.oracle.graal.python.builtins.objects.function.PArguments;
 import com.oracle.graal.python.builtins.objects.object.PythonObjectLibrary;
-import com.oracle.graal.python.nodes.PNodeObject;
 import com.oracle.graal.python.nodes.expression.CoerceToBooleanNodeFactory.NotNodeGen;
 import com.oracle.graal.python.nodes.expression.CoerceToBooleanNodeFactory.YesNodeGen;
 import com.oracle.graal.python.nodes.object.IsBuiltinClassProfile;
+import com.oracle.graal.python.runtime.interop.InteropMap;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -144,7 +144,7 @@ public abstract class CoerceToBooleanNode extends UnaryOpNode {
 
         @Override
         public Object getNodeObject() {
-            return PNodeObject.create(AnalysisTags.UnaryOperationTag.METADATA_KEY_OPERATOR, "!");
+            return InteropMap.create(AnalysisTags.UnaryOperationTag.METADATA_KEY_OPERATOR, "!");
         }
     }
 }

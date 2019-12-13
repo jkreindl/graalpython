@@ -25,7 +25,7 @@
  */
 package com.oracle.graal.python.nodes.literal;
 
-import com.oracle.graal.python.nodes.PNodeObject;
+import com.oracle.graal.python.runtime.interop.InteropMap;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.AnalysisTags;
 
@@ -53,7 +53,7 @@ public final class IntegerLiteralNode extends LiteralNode {
 
     @Override
     public Object getNodeObject() {
-        return PNodeObject.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.NumericLiteral.name());
+        return InteropMap.create(AnalysisTags.LiteralTag.METADATA_KEY_TYPE, AnalysisTags.LiteralTag.Type.NumericLiteral.name());
     }
 
 }
