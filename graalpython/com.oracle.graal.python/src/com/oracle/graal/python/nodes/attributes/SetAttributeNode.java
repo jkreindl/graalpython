@@ -47,10 +47,13 @@ import com.oracle.graal.python.nodes.call.special.LookupAndCallTernaryNode;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
 import com.oracle.graal.python.nodes.frame.WriteNode;
 import com.oracle.graal.python.nodes.statement.StatementNode;
+import com.oracle.graal.python.runtime.interop.InteropMap;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 
 @NodeChild(value = "object", type = ExpressionNode.class)
 @NodeChild(value = "rhs", type = ExpressionNode.class)
@@ -105,5 +108,15 @@ public abstract class SetAttributeNode extends StatementNode implements WriteNod
     protected void doIt(VirtualFrame frame, Object object, Object value,
                     @Cached("create(__SETATTR__)") LookupAndCallTernaryNode call) {
         call.execute(frame, object, key, value);
+    }
+
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return tag == AnalysisTags.WritePropertyTag.class || super.hasTag(tag);
+    }
+
+    @Override
+    public Object getNodeObject() {
+        return InteropMap.create(AnalysisTags.WritePropertyTag.METADATA_KEY_PROPERTY_NAME, key);
     }
 }
