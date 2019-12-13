@@ -50,6 +50,8 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 @NodeInfo(shortName = __GETITEM__)
@@ -147,4 +149,8 @@ public abstract class GetItemNode extends BinaryOpNode implements ReadNode {
         return SetItemNode.create(getPrimary(), getSlice(), rhs);
     }
 
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return tag == AnalysisTags.ReadElementTag.class || super.hasTag(tag);
+    }
 }
