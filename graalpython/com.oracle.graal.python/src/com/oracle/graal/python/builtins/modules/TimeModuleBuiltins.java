@@ -195,7 +195,7 @@ public final class TimeModuleBuiltins extends PythonBuiltins {
          * The maximum date, which are systems able to handle is 2262 04 11. This corresponds to the
          * 64 bit long.
          *
-         * @return
+         * @return current system time in nanoseconds
          */
         @Specialization
         public long time() {

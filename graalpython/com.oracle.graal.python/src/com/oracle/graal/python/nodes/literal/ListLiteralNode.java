@@ -31,6 +31,7 @@ import com.oracle.graal.python.builtins.objects.common.SequenceStorageNodes.List
 import com.oracle.graal.python.builtins.objects.list.PList;
 import com.oracle.graal.python.nodes.PNode;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
+import com.oracle.graal.python.runtime.PythonOptions;
 import com.oracle.graal.python.runtime.interop.InteropMap;
 import com.oracle.graal.python.runtime.object.PythonObjectFactory;
 import com.oracle.graal.python.runtime.sequence.storage.BasicSequenceStorage;
