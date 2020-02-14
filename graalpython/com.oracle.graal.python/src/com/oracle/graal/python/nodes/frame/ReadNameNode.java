@@ -54,6 +54,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 
@@ -126,6 +127,6 @@ public abstract class ReadNameNode extends ExpressionNode implements ReadNode, A
 
     @Override
     public Object getNodeObject() {
-        return NodeObjectDescriptor.createNodeObjectDescriptor(StandardTags.ReadVariableTag.NAME, attributeId);
+        return NodeObjectDescriptor.createNodeObjectDescriptor(StandardTags.ReadVariableTag.NAME, attributeId, AnalysisTags.ReadVariableTag.METADATA_KEY_NAME, attributeId);
     }
 }

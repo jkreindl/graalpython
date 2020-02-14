@@ -33,6 +33,7 @@ import com.oracle.graal.python.nodes.statement.StatementNode;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -66,6 +67,6 @@ public final class ReadGeneratorFrameVariableNode extends ReadVariableNode {
 
     @Override
     public Object getNodeObject() {
-        return NodeObjectDescriptor.createNodeObjectDescriptor(StandardTags.ReadVariableTag.NAME, getSlot().getIdentifier());
+        return NodeObjectDescriptor.createNodeObjectDescriptor(StandardTags.ReadVariableTag.NAME, getSlot().getIdentifier(), AnalysisTags.ReadVariableTag.METADATA_KEY_NAME, getSlot().getIdentifier());
     }
 }

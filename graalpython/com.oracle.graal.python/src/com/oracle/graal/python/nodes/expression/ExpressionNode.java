@@ -44,8 +44,10 @@ import com.oracle.graal.python.nodes.PNode;
 import com.oracle.graal.python.nodes.control.BlockNode;
 import com.oracle.graal.python.nodes.statement.StatementNode;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
+import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.StandardTags.ExpressionTag;
 import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
 import com.oracle.truffle.api.instrumentation.Tag;
@@ -108,6 +110,11 @@ public abstract class ExpressionNode extends PNode {
 
     @Override
     public boolean hasTag(Class<? extends Tag> tag) {
+        if (tag == AnalysisTags.ReadVariableTag.class) {
+            return hasTag(StandardTags.ReadVariableTag.class);
+        } else if (tag == AnalysisTags.WriteVariableTag.class) {
+            return hasTag(StandardTags.WriteVariableTag.class);
+        }
         return tag == ExpressionTag.class || (tag == StatementTag.class && isStatement()) || super.hasTag(tag);
     }
 

@@ -55,6 +55,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.Node;
@@ -179,7 +180,7 @@ public abstract class ReadGlobalOrBuiltinNode extends ExpressionNode implements 
 
     @Override
     public Object getNodeObject() {
-        return NodeObjectDescriptor.createNodeObjectDescriptor(StandardTags.ReadVariableTag.NAME, attributeId);
+        return NodeObjectDescriptor.createNodeObjectDescriptor(StandardTags.ReadVariableTag.NAME, attributeId, AnalysisTags.ReadVariableTag.METADATA_KEY_NAME, attributeId);
     }
 }
 

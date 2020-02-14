@@ -28,11 +28,15 @@ package com.oracle.graal.python.nodes.frame;
 import com.oracle.graal.python.builtins.objects.ints.PInt;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
 import com.oracle.graal.python.nodes.frame.WriteLocalVariableNodeGen.WriteLocalFrameSlotNodeGen;
+import com.oracle.graal.python.nodes.instrumentation.NodeObjectDescriptor;
 import com.oracle.graal.python.nodes.statement.StatementNode;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -179,5 +183,16 @@ public abstract class WriteLocalVariableNode extends StatementNode implements Wr
 
     public final FrameSlot getSlot() {
         return writeNode.getSlot();
+    }
+
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return tag == AnalysisTags.ReadVariableTag.class || super.hasTag(tag);
+    }
+
+    @Override
+    @CompilerDirectives.TruffleBoundary
+    public Object getNodeObject() {
+        return NodeObjectDescriptor.createNodeObjectDescriptor(AnalysisTags.ReadVariableTag.METADATA_KEY_NAME, String.valueOf(getSlot()));
     }
 }
