@@ -99,10 +99,14 @@ public final class NodeObjectDescriptor implements TruffleObject {
         return desc;
     }
 
-    public static NodeObjectDescriptor createNodeObjectDescriptor(String name, Object value, String name2, Object value2) {
+    public static NodeObjectDescriptor createNodeObjectDescriptor(String name, Object value, Object ...args) {
         NodeObjectDescriptor desc = new NodeObjectDescriptor();
         desc.addProperty(name, value);
-        desc.addProperty(name2, value2);
+        assert args != null;
+        assert args.length % 2 == 0;
+        for (int i = 0; i < args.length; i += 2) {
+            desc.addProperty((String) args[i], args[i + 1]);
+        }
         return desc;
     }
 }

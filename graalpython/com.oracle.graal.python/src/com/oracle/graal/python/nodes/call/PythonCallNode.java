@@ -41,6 +41,7 @@ import com.oracle.graal.python.nodes.call.special.CallUnaryMethodNode;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
 import com.oracle.graal.python.nodes.frame.ReadGlobalOrBuiltinNode;
 import com.oracle.graal.python.nodes.frame.ReadNameNode;
+import com.oracle.graal.python.nodes.instrumentation.NodeObjectDescriptor;
 import com.oracle.graal.python.nodes.interop.PForeignToPTypeNode;
 import com.oracle.graal.python.runtime.exception.PythonErrorType;
 import com.oracle.graal.python.runtime.interop.InteropArray;
@@ -339,6 +340,6 @@ public abstract class PythonCallNode extends ExpressionNode {
 
     @Override
     public Object getNodeObject() {
-        return InteropMap.create(AnalysisTags.FunctionCallTag.METADATA_KEY_IS_PREFIX_CALLING, false, AnalysisTags.FunctionCallTag.METADATA_KEY_ARG_OFFSET, 1, AnalysisTags.FunctionCallTag.METADATA_KEY_ARGUMENT_COUNT, argumentNodes == null ? 0 : argumentNodes.length, AnalysisTags.FunctionCallTag.METADATA_KEY_CALLEE_NAME, calleeName);
+        return NodeObjectDescriptor.createNodeObjectDescriptor(AnalysisTags.FunctionCallTag.METADATA_KEY_IS_PREFIX_CALLING, false, AnalysisTags.FunctionCallTag.METADATA_KEY_ARG_OFFSET, 1, AnalysisTags.FunctionCallTag.METADATA_KEY_ARGUMENT_COUNT, argumentNodes == null ? 0 : argumentNodes.length, AnalysisTags.FunctionCallTag.METADATA_KEY_CALLEE_NAME, calleeName);
     }
 }

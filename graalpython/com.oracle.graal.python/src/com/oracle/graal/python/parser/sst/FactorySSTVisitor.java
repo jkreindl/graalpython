@@ -411,6 +411,7 @@ public class FactorySSTVisitor implements SSTreeVisitor<PNode> {
         ClassBodyRootNode classBodyRoot = nodeFactory.createClassBodyRoot(nodeSourceSection, node.name, scopeEnvironment.getCurrentFrame(), bodyAsExpr, scopeEnvironment.getExecutionCellSlots());
         RootCallTarget ct = Truffle.getRuntime().createCallTarget(classBodyRoot);
         FunctionDefinitionNode funcDef = new FunctionDefinitionNode(node.name, null, null, null, null, ct, scopeEnvironment.getDefinitionCellSlots(), scopeEnvironment.getExecutionCellSlots(), null);
+        funcDef.assignSourceSection(nodeSourceSection);
         scopeEnvironment.setCurrentScope(node.classScope.getParent());
 
         ExpressionNode[] args;
@@ -813,6 +814,7 @@ public class FactorySSTVisitor implements SSTreeVisitor<PNode> {
         } else {
             funcDef = new FunctionDefinitionNode(node.name, node.enclosingClassName, doc, defaults, kwDefaults, ct, scopeEnvironment.getDefinitionCellSlots(),
                             scopeEnvironment.getExecutionCellSlots(), annotations);
+            funcDef.assignSourceSection(sourceSection);
         }
         scopeEnvironment.setCurrentScope(node.functionScope.getParent());
         ReadNode funcVar = scopeEnvironment.findVariable(node.name);
@@ -1062,7 +1064,11 @@ public class FactorySSTVisitor implements SSTreeVisitor<PNode> {
         }
         StatementNode result;
         if (node.value != null) {
-            result = new ReturnNode.FrameReturnNode(createWriteLocal((ExpressionNode) node.value.accept(this), scopeEnvironment.getReturnSlot()));
+            final ExpressionNode valueNode = (ExpressionNode) node.value.accept(this);
+            if (valueNode.getSourceSection() == null) {
+                valueNode.assignSourceSection(createSourceSection(node.value.startOffset, node.value.endOffset));
+            }
+            result = nodeFactory.createFrameReturn(createWriteLocal(valueNode, scopeEnvironment.getReturnSlot()));
         } else {
             result = nodeFactory.createReturn();
         }

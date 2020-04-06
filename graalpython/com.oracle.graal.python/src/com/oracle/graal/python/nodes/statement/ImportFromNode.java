@@ -36,15 +36,24 @@ import com.oracle.graal.python.nodes.PRaiseNode;
 import com.oracle.graal.python.nodes.attributes.GetAttributeNode;
 import com.oracle.graal.python.nodes.attributes.ReadAttributeFromObjectNode;
 import com.oracle.graal.python.nodes.call.special.LookupAndCallBinaryNode;
+import com.oracle.graal.python.nodes.expression.ExpressionNode;
 import com.oracle.graal.python.nodes.frame.WriteNode;
+import com.oracle.graal.python.nodes.instrumentation.NodeObjectDescriptor;
+import com.oracle.graal.python.nodes.literal.StringLiteralNode;
 import com.oracle.graal.python.nodes.object.IsBuiltinClassProfile;
 import com.oracle.graal.python.nodes.subscript.GetItemNode;
 import com.oracle.graal.python.runtime.exception.PException;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.InstrumentableNode;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.ExplodeLoop.LoopExplosionKind;
+import com.oracle.truffle.api.source.SourceSection;
+
+import java.util.Set;
 
 public class ImportFromNode extends AbstractImportNode {
     private final String importee;
@@ -134,6 +143,67 @@ public class ImportFromNode extends AbstractImportNode {
                     throw raiseNode.raise(ImportError, "cannot import name '%s'", attr);
                 }
             }
+        }
+    }
+
+    @Override
+    public InstrumentableNode materializeInstrumentableNodes(Set<Class<? extends Tag>> materializedTags) {
+        // the materialized node provides the symbols to be imported as intermediate values, the module to import from as the callee
+        for (Class<? extends Tag> tag : materializedTags) {
+            if (hasTag(tag)) {
+                final MaterializedImportFromNode materializedNode = new MaterializedImportFromNode(importee, fromlist, aslist, level);
+                materializedNode.assignSourceSection(getSourceSection());
+                return materializedNode;
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Object getNodeObject() {
+        return NodeObjectDescriptor.createNodeObjectDescriptor(AnalysisTags.FunctionCallTag.METADATA_KEY_IS_PREFIX_CALLING, true, AnalysisTags.FunctionCallTag.METADATA_KEY_ARG_OFFSET, 1, AnalysisTags.FunctionCallTag.METADATA_KEY_ARGUMENT_COUNT, fromlist.length, AnalysisTags.FunctionCallTag.METADATA_KEY_CALLEE_NAME, importee);
+    }
+
+    private final class MaterializedImportFromNode extends ImportFromNode {
+
+        @Child private ExpressionNode importeeNode;
+        @Children private ExpressionNode[] fromNodes;
+
+        protected MaterializedImportFromNode(String importee, String[] fromlist, WriteNode[] readNodes, int level) {
+            super(importee, fromlist, readNodes, level);
+            importeeNode = new StringLiteralNode(importee);
+            fromNodes = new ExpressionNode[fromlist.length];
+            for (int i = 0; i < fromlist.length; i++) {
+                fromNodes[i] = new StringLiteralNode(fromlist[i]);
+            }
+        }
+
+        @Override
+        public void executeVoid(VirtualFrame frame) {
+            importeeNode.execute(frame);
+            executeFromNodes(frame);
+            super.executeVoid(frame);
+        }
+
+        @ExplodeLoop
+        private void executeFromNodes(VirtualFrame frame) {
+            for (ExpressionNode fromNode : fromNodes) {
+                fromNode.execute(frame);
+            }
+        }
+
+        @Override
+        public void assignSourceSection(SourceSection source) {
+            super.assignSourceSection(source);
+            importeeNode.assignSourceSection(source);
+            for (int i = 0; i < fromlist.length; i++) {
+                fromNodes[i].assignSourceSection(source);
+            }
+        }
+
+        @Override
+        public InstrumentableNode materializeInstrumentableNodes(Set<Class<? extends Tag>> materializedTags) {
+            return this;
         }
     }
 }
