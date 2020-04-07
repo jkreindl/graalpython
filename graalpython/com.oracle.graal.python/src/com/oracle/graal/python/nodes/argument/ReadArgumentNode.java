@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * The Universal Permissive License (UPL), Version 1.0
@@ -42,10 +42,18 @@ package com.oracle.graal.python.nodes.argument;
 
 import com.oracle.graal.python.nodes.PNodeWithContext;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
+import com.oracle.graal.python.nodes.instrumentation.NodeObjectDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.source.SourceSection;
 
 public abstract class ReadArgumentNode extends PNodeWithContext {
+
+    private SourceSection sourceSection = null;
+
     public abstract Object execute(VirtualFrame frame);
 
     private static final class ArgumentExpressionNode extends ExpressionNode {
@@ -64,9 +72,28 @@ public abstract class ReadArgumentNode extends PNodeWithContext {
         public NodeCost getCost() {
             return NodeCost.NONE;
         }
+
+        @Override
+        public boolean hasTag(Class<? extends Tag> tag) {
+            return tag == AnalysisTags.ReadArgumentTag.class || tag == StandardTags.ExpressionTag.class;
+        }
+
+        @Override
+        public Object getNodeObject() {
+            // TODO kwargs don't actually have an index
+            return NodeObjectDescriptor.createNodeObjectDescriptor(AnalysisTags.ReadArgumentTag.METADATA_KEY_INDEX, argNode.getIndex());
+        }
+    }
+
+    public void assignSourceSection(SourceSection sourceSection) {
+        this.sourceSection = sourceSection;
     }
 
     public final ExpressionNode asExpression() {
-        return new ArgumentExpressionNode(this);
+        final ArgumentExpressionNode node = new ArgumentExpressionNode(this);
+        node.assignSourceSection(sourceSection);
+        return node;
     }
+
+    public abstract int getIndex();
 }

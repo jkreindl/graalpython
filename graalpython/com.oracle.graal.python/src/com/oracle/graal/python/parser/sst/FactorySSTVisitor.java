@@ -69,7 +69,6 @@ import com.oracle.graal.python.nodes.control.BaseBlockNode;
 import com.oracle.graal.python.nodes.control.BlockNode;
 import com.oracle.graal.python.nodes.control.ForNode;
 import com.oracle.graal.python.nodes.control.GetIteratorExpressionNode;
-import com.oracle.graal.python.nodes.control.ReturnNode;
 import com.oracle.graal.python.nodes.control.ReturnTargetNode;
 import com.oracle.graal.python.nodes.expression.AndNode;
 import com.oracle.graal.python.nodes.expression.CoerceToBooleanNode;
@@ -722,7 +721,7 @@ public class FactorySSTVisitor implements SSTreeVisitor<PNode> {
         ScopeInfo oldScope = scopeEnvironment.getCurrentScope();
         scopeEnvironment.setCurrentScope(node.functionScope);
         Signature signature = node.argBuilder.getSignature();
-        StatementNode argumentNodes = nodeFactory.createBlock(node.argBuilder.getArgumentNodes());
+        StatementNode argumentNodes = nodeFactory.createBlock(node.argBuilder.getArgumentNodes(this::createSourceSection));
 
         StatementNode body;
         GeneratorFactorySSTVisitor generatorFactory = null;
@@ -912,7 +911,7 @@ public class FactorySSTVisitor implements SSTreeVisitor<PNode> {
         /**
          * Parameters
          */
-        StatementNode argumentNodes = nodeFactory.createBlock(node.args == null ? new StatementNode[0] : node.args.getArgumentNodes());
+        StatementNode argumentNodes = nodeFactory.createBlock(node.args == null ? new StatementNode[0] : node.args.getArgumentNodes(this::createSourceSection));
         Signature signature = node.args == null ? Signature.EMPTY : node.args.getSignature();
 
         /**

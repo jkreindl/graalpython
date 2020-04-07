@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * The Universal Permissive License (UPL), Version 1.0
@@ -41,11 +41,14 @@
 package com.oracle.graal.python.parser.sst;
 
 import com.oracle.graal.python.builtins.objects.function.Signature;
+import com.oracle.graal.python.nodes.argument.ReadArgumentNode;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
 import com.oracle.graal.python.nodes.function.FunctionDefinitionNode;
 import com.oracle.graal.python.nodes.statement.StatementNode;
 import com.oracle.graal.python.parser.ScopeEnvironment;
 import com.oracle.graal.python.parser.ScopeInfo;
+import com.oracle.truffle.api.source.SourceSection;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -64,9 +67,14 @@ public final class ArgDefListBuilder {
         // We don't use type now, but in future ...
         @SuppressWarnings("unused") protected final SSTNode type;
 
-        public Parameter(String name, SSTNode type) {
+        protected final int startOffset;
+        protected final int endOffset;
+
+        public Parameter(String name, SSTNode type, int startOffset, int endOffset) {
             this.name = name;
             this.type = type;
+            this.startOffset = startOffset;
+            this.endOffset = endOffset;
         }
 
     }
@@ -75,8 +83,8 @@ public final class ArgDefListBuilder {
 
         protected final SSTNode value;
 
-        public ParameterWithDefValue(String name, SSTNode type, SSTNode value) {
-            super(name, type);
+        public ParameterWithDefValue(String name, SSTNode type, SSTNode value, int startOffset, int endOffset) {
+            super(name, type, startOffset, endOffset);
             this.value = value;
         }
 
@@ -106,7 +114,7 @@ public final class ArgDefListBuilder {
         DUPLICATED_ARGUMENT// duplicate argument 'x' in function definition
     };
 
-    public AddParamResult addParam(String name, SSTNode type, SSTNode defValue) {
+    public AddParamResult addParam(String name, SSTNode type, SSTNode defValue, int startOffset, int endOffset) {
         if (paramNames.contains(name)) {
             return AddParamResult.DUPLICATED_ARGUMENT;
         }
@@ -114,7 +122,7 @@ public final class ArgDefListBuilder {
             return AddParamResult.NONDEFAULT_FOLLOWS_DEFAULT;
         }
         paramNames.add(name);
-        Parameter arg = defValue == null ? new Parameter(name, type) : new ParameterWithDefValue(name, type, defValue);
+        Parameter arg = defValue == null ? new Parameter(name, type, startOffset, endOffset) : new ParameterWithDefValue(name, type, defValue, startOffset, endOffset);
         if (type != null) {
             countOfTypedParams++;
         }
@@ -144,21 +152,21 @@ public final class ArgDefListBuilder {
         return AddParamResult.OK;
     }
 
-    public void addSplat(String name, SSTNode type) {
+    public void addSplat(String name, SSTNode type, int startOffset, int endOffset) {
         // System.out.println("Splat: " + name);
         if (args == null) {
             args = new ArrayList<>();
         }
-        args.add(new Parameter(name, type));
+        args.add(new Parameter(name, type, startOffset, endOffset));
         splatIndex = args.size() - 1;
     }
 
-    public void addKwargs(String name, SSTNode type) {
+    public void addKwargs(String name, SSTNode type, int startOffset, int endOffset) {
         // System.out.println("KwArg: " + name);
         if (kwargs == null) {
             kwargs = new ArrayList<>();
         }
-        kwargs.add(new Parameter(name, type));
+        kwargs.add(new Parameter(name, type, startOffset, endOffset));
         kwarIndex = kwargs.size() - 1;
     }
 
@@ -205,7 +213,31 @@ public final class ArgDefListBuilder {
         this.positionalOnlyIndex = args.size();
     }
 
-    public StatementNode[] getArgumentNodes() {
+    public interface SourceProducer {
+        SourceSection createSourceSection(int startOffset, int endOffset);
+    }
+
+    private StatementNode getArgumentWrite(Parameter parameter, ReadArgumentNode readArgumentNode, SourceProducer sourceProducer) {
+        readArgumentNode.assignSourceSection(sourceProducer.createSourceSection(parameter.startOffset, parameter.endOffset));
+        final StatementNode writeNode = scopeEnvironment.getWriteNode(parameter.name, readArgumentNode);
+        writeNode.assignSourceSection(sourceProducer.createSourceSection(parameter.startOffset, parameter.endOffset));
+        return writeNode;
+    }
+
+    public StatementNode getWriteArgumentToLocal(Parameter parameter, int index, SourceProducer sourceProducer) {
+        return getArgumentWrite(parameter, scopeEnvironment.getIndexedArgumentRead(index), sourceProducer);
+    }
+
+    public StatementNode getWriteVarArgsToLocal(Parameter parameter, int index, SourceProducer sourceProducer) {
+        return getArgumentWrite(parameter, scopeEnvironment.getIndexedVarArgRead(index), sourceProducer);
+    }
+
+    public StatementNode getWriteKwArgsToLocal(Parameter parameter, String[] kwId, SourceProducer sourceProducer) {
+        return getArgumentWrite(parameter, scopeEnvironment.getKwArgsRead(kwId), sourceProducer);
+    }
+
+    public StatementNode[] getArgumentNodes(SourceProducer sourceProducer) {
+        assert sourceProducer != null;
         if (args == null && kwargs == null) {
             return new StatementNode[0];
         }
@@ -218,10 +250,10 @@ public final class ArgDefListBuilder {
         for (int i = 0; i < argsLen - delta; i++) {
             if (splatIndex == i) {
                 if (!starMarker) {
-                    nodes[i] = scopeEnvironment.getWriteVarArgsToLocal(args.get(i).name, i);
+                    nodes[i] = getWriteVarArgsToLocal(args.get(i), i, sourceProducer);
                 }
             } else {
-                nodes[i] = scopeEnvironment.getWriteArgumentToLocal(args.get(i).name, i);
+                nodes[i] = getWriteArgumentToLocal(args.get(i), i, sourceProducer);
             }
         }
 
@@ -230,12 +262,12 @@ public final class ArgDefListBuilder {
         int starMarkerDelta = starMarker ? 0 : 1;
         for (int i = 0; i < kwargsLen; i++) {
             if (i != kwarIndex) {
-                nodes[i + delta] = scopeEnvironment.getWriteArgumentToLocal(kwargs.get(i).name, i + delta - starMarkerDelta);
+                nodes[i + delta] = getWriteArgumentToLocal(kwargs.get(i), i + delta - starMarkerDelta, sourceProducer);
                 if (kwarIndex != -1) {
                     kwId[i] = kwargs.get(i).name;
                 }
             } else {
-                nodes[i + delta] = scopeEnvironment.getWriteKwArgsToLocal(kwargs.get(i).name, kwId);
+                nodes[i + delta] = getWriteKwArgsToLocal(kwargs.get(i), kwId, sourceProducer);
             }
         }
         return nodes;

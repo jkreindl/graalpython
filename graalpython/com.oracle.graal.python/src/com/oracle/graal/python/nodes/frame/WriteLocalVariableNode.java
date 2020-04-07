@@ -30,7 +30,7 @@ import com.oracle.graal.python.nodes.expression.ExpressionNode;
 import com.oracle.graal.python.nodes.frame.WriteLocalVariableNodeGen.WriteLocalFrameSlotNodeGen;
 import com.oracle.graal.python.nodes.instrumentation.NodeObjectDescriptor;
 import com.oracle.graal.python.nodes.statement.StatementNode;
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -187,12 +187,12 @@ public abstract class WriteLocalVariableNode extends StatementNode implements Wr
 
     @Override
     public boolean hasTag(Class<? extends Tag> tag) {
-        return tag == AnalysisTags.ReadVariableTag.class || super.hasTag(tag);
+        return tag == AnalysisTags.WriteVariableTag.class || super.hasTag(tag);
     }
 
     @Override
-    @CompilerDirectives.TruffleBoundary
+    @TruffleBoundary
     public Object getNodeObject() {
-        return NodeObjectDescriptor.createNodeObjectDescriptor(AnalysisTags.ReadVariableTag.METADATA_KEY_NAME, String.valueOf(getSlot()));
+        return NodeObjectDescriptor.createNodeObjectDescriptor(AnalysisTags.WriteVariableTag.METADATA_KEY_NAME, String.valueOf(getSlot().getIdentifier()));
     }
 }

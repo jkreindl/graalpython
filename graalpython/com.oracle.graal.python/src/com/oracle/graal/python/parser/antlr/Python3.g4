@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, Oracle and/or its affiliates.
+ * Copyright (c) 2017-2020, Oracle and/or its affiliates.
  * Copyright (c) 2014 by Bart Kiers
  *
  * The MIT License (MIT)
@@ -444,7 +444,7 @@ defparameter [ArgDefListBuilder args]
 	( ':' test { type = $test.result; } )?
 	( '=' test { defValue = $test.result; } )?
 	{ 
-            ArgDefListBuilder.AddParamResult result = args.addParam($NAME.text, type, defValue); 
+            ArgDefListBuilder.AddParamResult result = args.addParam($NAME.text, type, defValue, getStartIndex($NAME), getStopIndex($NAME));
             switch(result) {
                 case NONDEFAULT_FOLLOWS_DEFAULT:
                     throw new PythonRecognitionException("non-default argument follows default argument", this, _input, $ctx, getCurrentToken());
@@ -458,12 +458,12 @@ defparameter [ArgDefListBuilder args]
 splatparameter [ArgDefListBuilder args]
 :
 	'*'
-	{ String name = null; SSTNode type = null; }
+	{ String name = null; SSTNode type = null; int startOffset = -1; int stopOffset = -1; }
 	(
-		NAME { name = $NAME.text; }
+		NAME { name = $NAME.text; startOffset = getStartIndex($NAME); stopOffset = getStopIndex($NAME); }
 		( ':' test { type = $test.result; } )?
 	)?
-	{ args.addSplat(name, type); }
+	{ args.addSplat(name, type, startOffset, stopOffset); }
 ;
 
 kwargsparameter [ArgDefListBuilder args]
@@ -471,7 +471,7 @@ kwargsparameter [ArgDefListBuilder args]
 	'**' NAME
 	{ SSTNode type = null; }
 	( ':' test { type = $test.result; } )?
-	{ args.addKwargs($NAME.text, type); }
+	{ args.addKwargs($NAME.text, type, getStartIndex($NAME), getStopIndex($NAME)); }
 ;
 
 varargslist returns [ArgDefListBuilder result]
@@ -510,7 +510,7 @@ vdefparameter [ArgDefListBuilder args]
 	{ SSTNode defValue = null; }
 	( '=' test { defValue = $test.result; } )?
 	{ 
-            ArgDefListBuilder.AddParamResult result = args.addParam($NAME.text, null, defValue); 
+            ArgDefListBuilder.AddParamResult result = args.addParam($NAME.text, null, defValue, getStartIndex($NAME), getStopIndex($NAME));
             switch(result) {
                 case NONDEFAULT_FOLLOWS_DEFAULT:
                     throw new PythonRecognitionException("non-default argument follows default argument", this, _input, $ctx, getCurrentToken());
@@ -524,15 +524,15 @@ vdefparameter [ArgDefListBuilder args]
 vsplatparameter [ArgDefListBuilder args]
 :
 	'*'
-	{ String name = null; }
-	( NAME { name = $NAME.text; } )?
-	{ args.addSplat(name, null);}
+	{ String name = null; int startOffset = -1; int stopOffset = -1; }
+	( NAME { name = $NAME.text; startOffset = getStartIndex($NAME); stopOffset = getStopIndex($NAME); } )?
+	{ args.addSplat(name, null, startOffset, stopOffset); }
 ;
 
 vkwargsparameter [ArgDefListBuilder args]
 :
 	'**' NAME
-	{args.addKwargs($NAME.text, null);}
+	{args.addKwargs($NAME.text, null, getStartIndex($NAME), getStopIndex($NAME));}
 ;
 
 stmt

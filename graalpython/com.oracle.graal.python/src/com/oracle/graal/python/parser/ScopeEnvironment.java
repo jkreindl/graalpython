@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * The Universal Permissive License (UPL), Version 1.0
@@ -53,7 +53,7 @@ import com.oracle.graal.python.builtins.objects.cell.PCell;
 import com.oracle.graal.python.nodes.NodeFactory;
 import com.oracle.graal.python.nodes.PNode;
 import com.oracle.graal.python.nodes.argument.ReadArgumentNode;
-import com.oracle.graal.python.nodes.argument.ReadIndexedArgumentNode;
+import com.oracle.graal.python.nodes.argument.ReadIndexedArgumentNodeGen;
 import com.oracle.graal.python.nodes.argument.ReadVarArgsNode;
 import com.oracle.graal.python.nodes.argument.ReadVarKeywordsNode;
 import com.oracle.graal.python.nodes.cell.ReadLocalCellNode;
@@ -390,21 +390,21 @@ public class ScopeEnvironment implements CellFrameSlotSupplier {
                         : WriteGeneratorFrameVariableNode.create(slot, right);
     }
 
-    private StatementNode getWriteNode(String name, ReadArgumentNode readNode) {
+    public StatementNode getWriteNode(String name, ReadArgumentNode readNode) {
         ExpressionNode right = readNode.asExpression();
         return getWriteNode(name, currentScope.findFrameSlot(name), right);
     }
 
-    public StatementNode getWriteArgumentToLocal(String name, int index) {
-        return getWriteNode(name, ReadIndexedArgumentNode.create(index));
+    public ReadArgumentNode getIndexedArgumentRead(int index) {
+        return ReadIndexedArgumentNodeGen.create(index);
     }
 
-    public StatementNode getWriteVarArgsToLocal(String name, int index) {
-        return getWriteNode(name, ReadVarArgsNode.create(index));
+    public ReadArgumentNode getIndexedVarArgRead(int index) {
+        return ReadVarArgsNode.create(index);
     }
 
-    public StatementNode getWriteKwArgsToLocal(String name, String[] names) {
-        return getWriteNode(name, ReadVarKeywordsNode.createForUserFunction(names));
+    public ReadArgumentNode getKwArgsRead(String[] names) {
+        return ReadVarKeywordsNode.createForUserFunction(names);
     }
 
     public ScopeInfo setCurrentScope(ScopeInfo info) {
