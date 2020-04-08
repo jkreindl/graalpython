@@ -45,14 +45,18 @@ import java.util.function.Supplier;
 import com.oracle.graal.python.builtins.objects.PNone;
 import com.oracle.graal.python.builtins.objects.PNotImplemented;
 import com.oracle.graal.python.nodes.PNodeWithContext;
+import com.oracle.graal.python.nodes.SpecialMethodNames;
 import com.oracle.graal.python.nodes.attributes.LookupInheritedAttributeNode;
 import com.oracle.graal.python.nodes.call.special.CallBinaryMethodNode;
 import com.oracle.graal.python.nodes.call.special.LookupAndCallBinaryNode;
+import com.oracle.graal.python.nodes.instrumentation.NodeObjectDescriptor;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 
 @NodeChild("arg")
 @NodeChild("arg2")
@@ -153,4 +157,19 @@ public abstract class LookupAndCallInplaceNode extends ExpressionNode {
         return result;
     }
 
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        if (tag == AnalysisTags.BinaryOperationTag.class && hasBinaryVersion()) {
+            return true;
+        }
+        return super.hasTag(tag);
+    }
+
+    @Override
+    public Object getNodeObject() {
+        if (hasBinaryVersion()) {
+            return NodeObjectDescriptor.createNodeObjectDescriptor(AnalysisTags.BinaryOperationTag.METADATA_KEY_OPERATOR, SpecialMethodNames.lookupOperator(binaryOpName));
+        }
+        return null;
+    }
 }

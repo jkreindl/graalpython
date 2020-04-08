@@ -120,6 +120,7 @@ import com.oracle.truffle.api.source.SourceSection;
                 AnalysisTags.LiteralTag.class,
                 AnalysisTags.ControlFlowBranchTag.class,
                 AnalysisTags.UnaryOperationTag.class,
+                AnalysisTags.BinaryOperationTag.class,
                 AnalysisTags.ReadElementTag.class,
                 AnalysisTags.WriteElementTag.class,
                 AnalysisTags.ReadPropertyTag.class,

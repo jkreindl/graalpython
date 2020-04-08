@@ -187,4 +187,50 @@ public abstract class SpecialMethodNames {
     public static String getCompareReversal(int op) {
         return COMPARE_REVERSALS[op];
     }
+
+    public static String lookupOperator(String methodName) {
+        if (methodName != null) {
+            switch (methodName) {
+                case __ADD__:
+                case __IADD__:
+                    return "+";
+                case __SUB__:
+                case __ISUB__:
+                    return "-";
+                case __MUL__:
+                case __IMUL__:
+                    return "*";
+                case __TRUEDIV__:
+                case __ITRUEDIV__:
+                    return "/";
+                case __FLOORDIV__:
+                case __IFLOORDIV__:
+                    return "//";
+                case __MOD__:
+                case __IMOD__:
+                    return "%";
+                case __LSHIFT__:
+                case __ILSHIFT__:
+                    return "<<";
+                case __RSHIFT__:
+                case __IRSHIFT__:
+                    return ">>";
+                case __AND__:
+                case __IAND__:
+                    return "&";
+                case __OR__:
+                case __IOR__:
+                    return "|";
+                case __XOR__:
+                case __IXOR__:
+                    return "^";
+                case __MATMUL__:
+                case __IMATMUL__:
+                    return "@";
+                case __IPOW__:
+                    return "**";
+            }
+        }
+        return methodName;
+    }
 }

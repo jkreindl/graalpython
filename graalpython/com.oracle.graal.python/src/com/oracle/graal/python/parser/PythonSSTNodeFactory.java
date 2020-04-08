@@ -177,9 +177,9 @@ public final class PythonSSTNodeFactory {
         return new AnnAssignmentSSTNode(lhs, type, rhs, start, end);
     }
 
-    public SSTNode createAugAssignment(SSTNode lhs, String operation, SSTNode rhs, int startOffset, int endOffset) {
+    public SSTNode createAugAssignment(SSTNode lhs, String operation, SSTNode rhs, int startOffset, int endOffset, int operationStartOffset, int operationEndOffset) {
         declareVar(lhs);
-        return new AugAssignmentSSTNode(lhs, operation, rhs, startOffset, endOffset);
+        return new AugAssignmentSSTNode(lhs, operation, rhs, startOffset, endOffset, operationStartOffset, operationEndOffset);
     }
 
     private void declareVar(SSTNode value) {

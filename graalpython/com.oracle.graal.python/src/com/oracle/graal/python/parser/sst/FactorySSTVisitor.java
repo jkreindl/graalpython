@@ -273,6 +273,7 @@ public class FactorySSTVisitor implements SSTreeVisitor<PNode> {
         }
         ExpressionNode rhs = (ExpressionNode) node.rhs.accept(this);
         ExpressionNode binOp = nodeFactory.createInplaceOperation(node.operation, lhs, rhs);
+        binOp.assignSourceSection(createSourceSection(node.operationStartOffset, node.operationEndOffset));
         PNode duplicate = nodeFactory.duplicate(lhs, PNode.class);
         PNode result = ((ReadNode) duplicate).makeWriteNode(binOp);
         result.assignSourceSection(createSourceSection(node.startOffset, node.endOffset));

@@ -48,7 +48,10 @@ import com.oracle.graal.python.nodes.PRaiseNode;
 import com.oracle.graal.python.nodes.SpecialMethodNames;
 import com.oracle.graal.python.nodes.call.special.LookupAndCallBinaryNode;
 import com.oracle.graal.python.nodes.call.special.LookupAndCallBinaryNode.NotImplementedHandler;
+import com.oracle.graal.python.nodes.instrumentation.NodeObjectDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.NodeCost;
 
 public enum BinaryArithmetic {
@@ -107,6 +110,16 @@ public enum BinaryArithmetic {
         @Override
         public NodeCost getCost() {
             return NodeCost.NONE;
+        }
+
+        @Override
+        public boolean hasTag(Class<? extends Tag> tag) {
+            return tag == AnalysisTags.BinaryOperationTag.class || super.hasTag(tag);
+        }
+
+        @Override
+        public Object getNodeObject() {
+            return NodeObjectDescriptor.createNodeObjectDescriptor(AnalysisTags.BinaryOperationTag.METADATA_KEY_OPERATOR, SpecialMethodNames.lookupOperator(callNode.getName()));
         }
     }
 

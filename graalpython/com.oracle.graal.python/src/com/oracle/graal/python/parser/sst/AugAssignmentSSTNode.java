@@ -46,11 +46,16 @@ public class AugAssignmentSSTNode extends SSTNode {
     protected final SSTNode rhs;
     protected final String operation;
 
-    public AugAssignmentSSTNode(SSTNode lhs, String operation, SSTNode rhs, int startOffset, int endOffset) {
+    protected final int operationStartOffset;
+    protected final int operationEndOffset;
+
+    public AugAssignmentSSTNode(SSTNode lhs, String operation, SSTNode rhs, int startOffset, int endOffset, int operationStartOffset, int operationEndOffset) {
         super(startOffset, endOffset);
         this.lhs = lhs;
         this.rhs = rhs;
         this.operation = operation;
+        this.operationStartOffset = operationStartOffset;
+        this.operationEndOffset = operationEndOffset;
     }
 
     @Override

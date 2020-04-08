@@ -585,7 +585,7 @@ expr_stmt
 			|
 			testlist { rhs = $testlist.result; rhsStopIndex = getStopIndex($testlist.stop);}
 		)
-		{ push(factory.createAugAssignment($lhs.result, $augassign.text, rhs, getStartIndex($ctx), rhsStopIndex));}
+		{ push(factory.createAugAssignment($lhs.result, $augassign.text, rhs, getStartIndex($ctx), rhsStopIndex, getStartIndex($augassign.start), getStopIndex($augassign.stop)));}
 		|
 		{ int start = start(); }
 		{ SSTNode value = $lhs.result; }
