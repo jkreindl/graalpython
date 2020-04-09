@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
  * Copyright (c) 2013, Regents of the University of California
  *
  * All rights reserved.
@@ -37,6 +37,7 @@ import com.oracle.graal.python.nodes.argument.ReadArgumentNode;
 import com.oracle.graal.python.nodes.argument.ReadIndexedArgumentNode;
 import com.oracle.graal.python.nodes.argument.ReadVarArgsNode;
 import com.oracle.graal.python.nodes.argument.ReadVarKeywordsNode;
+import com.oracle.graal.python.nodes.function.builtins.BuiltinCallNode;
 import com.oracle.graal.python.nodes.function.builtins.PythonBinaryBuiltinNode;
 import com.oracle.graal.python.nodes.function.builtins.PythonQuaternaryBuiltinNode;
 import com.oracle.graal.python.nodes.function.builtins.PythonTernaryBuiltinNode;
@@ -47,10 +48,20 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
 
 public final class BuiltinFunctionRootNode extends PRootNode {
+
+    public static final SourceSection BUILTIN_SOURCE;
+    public static final SourceSection BUILTIN_ARGUMENT_SOURCE;
+
+    static {
+        BUILTIN_SOURCE = Source.newBuilder("python", "<python builtin>", "<python builtin>").build().createSection(1);
+        BUILTIN_ARGUMENT_SOURCE = Source.newBuilder("python", "<python builtin argument>", "<python builtin argument>").build().createSection(1);
+    }
+
     private final Signature signature;
     private final Builtin builtin;
     private final String name;
@@ -59,10 +70,6 @@ public final class BuiltinFunctionRootNode extends PRootNode {
     private final ConditionProfile customLocalsProfile = ConditionProfile.createCountingProfile();
     @Child private BuiltinCallNode body;
     @Child private CalleeContext calleeContext = CalleeContext.create();
-
-    private abstract static class BuiltinCallNode extends Node {
-        public abstract Object execute(VirtualFrame frame);
-    }
 
     private static final class BuiltinAnyCallNode extends BuiltinCallNode {
         @Child private PythonBuiltinNode node;
@@ -268,6 +275,10 @@ public final class BuiltinFunctionRootNode extends PRootNode {
             args.add(ReadVarKeywordsNode.create());
         }
 
+        for (ReadArgumentNode argNode : args) {
+            argNode.assignSourceSection(BUILTIN_ARGUMENT_SOURCE);
+        }
+
         return args.toArray(new ReadArgumentNode[args.size()]);
     }
 
@@ -347,6 +358,7 @@ public final class BuiltinFunctionRootNode extends PRootNode {
                     throw new RuntimeException("unexpected builtin node type: " + node.getClass());
                 }
             }
+            notifyInserted(body);
         }
         CalleeContext.enter(frame, customLocalsProfile);
         try {
@@ -387,5 +399,10 @@ public final class BuiltinFunctionRootNode extends PRootNode {
     @Override
     public boolean isPythonInternal() {
         return true;
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        return BUILTIN_SOURCE;
     }
 }

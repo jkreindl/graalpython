@@ -43,14 +43,19 @@ package com.oracle.graal.python.nodes.argument;
 import com.oracle.graal.python.nodes.PNodeWithContext;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
 import com.oracle.graal.python.nodes.instrumentation.NodeObjectDescriptor;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.GenerateWrapper;
+import com.oracle.truffle.api.instrumentation.InstrumentableNode;
+import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.source.SourceSection;
 
-public abstract class ReadArgumentNode extends PNodeWithContext {
+@GenerateWrapper
+public abstract class ReadArgumentNode extends PNodeWithContext implements InstrumentableNode {
 
     private SourceSection sourceSection = null;
 
@@ -72,17 +77,6 @@ public abstract class ReadArgumentNode extends PNodeWithContext {
         public NodeCost getCost() {
             return NodeCost.NONE;
         }
-
-        @Override
-        public boolean hasTag(Class<? extends Tag> tag) {
-            return tag == AnalysisTags.ReadArgumentTag.class || tag == StandardTags.ExpressionTag.class;
-        }
-
-        @Override
-        public Object getNodeObject() {
-            // TODO kwargs don't actually have an index
-            return NodeObjectDescriptor.createNodeObjectDescriptor(AnalysisTags.ReadArgumentTag.METADATA_KEY_INDEX, argNode.getIndex());
-        }
     }
 
     public void assignSourceSection(SourceSection sourceSection) {
@@ -90,10 +84,36 @@ public abstract class ReadArgumentNode extends PNodeWithContext {
     }
 
     public final ExpressionNode asExpression() {
-        final ArgumentExpressionNode node = new ArgumentExpressionNode(this);
-        node.assignSourceSection(sourceSection);
-        return node;
+        assert getParent() == null;
+        return new ArgumentExpressionNode(this);
     }
 
     public abstract int getIndex();
+
+    @Override
+    public SourceSection getSourceSection() {
+        CompilerAsserts.neverPartOfCompilation();
+        return sourceSection;
+    }
+
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return tag == AnalysisTags.ReadArgumentTag.class || tag == StandardTags.ExpressionTag.class;
+    }
+
+    @Override
+    public Object getNodeObject() {
+        // TODO kwargs don't actually have an index
+        return NodeObjectDescriptor.createNodeObjectDescriptor(AnalysisTags.ReadArgumentTag.METADATA_KEY_INDEX, getIndex());
+    }
+
+    @Override
+    public boolean isInstrumentable() {
+        return getSourceSection() != null;
+    }
+
+    @Override
+    public WrapperNode createWrapper(ProbeNode probe) {
+        return new ReadArgumentNodeWrapper(this, probe);
+    }
 }
