@@ -36,12 +36,15 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.GenerateWrapper;
+import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 @NodeInfo(shortName = "write_local")
 @NodeChild(value = "rightNode", type = ExpressionNode.class)
+@GenerateWrapper
 public abstract class WriteLocalVariableNode extends StatementNode implements WriteIdentifierNode {
     @Child private WriteLocalFrameSlotNode writeNode;
 
@@ -130,6 +133,10 @@ public abstract class WriteLocalVariableNode extends StatementNode implements Wr
         this.writeNode = WriteLocalFrameSlotNodeGen.create(slot);
     }
 
+    public WriteLocalVariableNode(WriteLocalVariableNode other) {
+        this.writeNode = WriteLocalFrameSlotNodeGen.create(other.getSlot());
+    }
+
     public static WriteLocalVariableNode create(FrameSlot slot, ExpressionNode right) {
         return WriteLocalVariableNodeGen.create(slot, right);
     }
@@ -194,5 +201,10 @@ public abstract class WriteLocalVariableNode extends StatementNode implements Wr
     @TruffleBoundary
     public Object getNodeObject() {
         return NodeObjectDescriptor.createNodeObjectDescriptor(AnalysisTags.WriteVariableTag.METADATA_KEY_NAME, String.valueOf(getSlot().getIdentifier()));
+    }
+
+    @Override
+    public WrapperNode createWrapper(ProbeNode probe) {
+        return new WriteLocalVariableNodeWrapper(this, this, probe);
     }
 }

@@ -116,6 +116,7 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
@@ -700,7 +701,8 @@ public class FactorySSTVisitor implements SSTreeVisitor<PNode> {
         iterator.assignSourceSection(createSourceSection(node.iterator.startOffset, node.iterator.endOffset));
         GetIteratorExpressionNode getIterator = nodeFactory.createGetIterator(iterator);
         getIterator.assignSourceSection(iterator.getSourceSection());
-        StatementNode forNode = new ForNode(body, makeWriteNode((ExpressionNode) target), getIterator);
+        final FrameSlot iteratorSlot = allocateTempLocalVariable(FrameSlotKind.Object);
+        StatementNode forNode = new ForNode(body, makeWriteNode((ExpressionNode) target), getIterator, iteratorSlot);
         // TODO: Do we need to create the ElseNode, even if the else branch is empty?
         StatementNode elseBranch = node.elseStatement == null ? nodeFactory.createBlock(new StatementNode[0]) : (StatementNode) node.elseStatement.accept(this);
         StatementNode result;
@@ -714,6 +716,7 @@ public class FactorySSTVisitor implements SSTreeVisitor<PNode> {
                             nodeFactory.createBreakTarget(forNode, nodeFactory.createBlock(new StatementNode[0])) : nodeFactory.createBreakTarget(forNode, elseBranch);
         }
         result.assignSourceSection(createSourceSection(node.startOffset, node.endOffset));
+        forNode.assignSourceSection(createSourceSection(node.startOffset, node.endOffset));
         return result;
     }
 
@@ -1269,9 +1272,20 @@ public class FactorySSTVisitor implements SSTreeVisitor<PNode> {
         }
     }
 
-    public ReadNode makeTempLocalVariable() {
+    public FrameSlot allocateTempLocalVariable() {
         String tempName = TEMP_LOCAL_PREFIX + scopeEnvironment.getCurrentScope().getFrameDescriptor().getSize();
-        FrameSlot tempSlot = scopeEnvironment.createAndReturnLocal(tempName);
+        return scopeEnvironment.createAndReturnLocal(tempName);
+    }
+
+    public FrameSlot allocateTempLocalVariable(FrameSlotKind kind) {
+        String tempName = TEMP_LOCAL_PREFIX + scopeEnvironment.getCurrentScope().getFrameDescriptor().getSize();
+        final FrameSlot local = scopeEnvironment.createAndReturnLocal(tempName);
+        scopeEnvironment.getCurrentScope().getFrameDescriptor().setFrameSlotKind(local, kind);
+        return local;
+    }
+
+    public ReadNode makeTempLocalVariable() {
+        FrameSlot tempSlot = allocateTempLocalVariable();
         return !scopeEnvironment.isInGeneratorScope()
                         ? ReadLocalVariableNode.create(tempSlot)
                         : ReadGeneratorFrameVariableNode.create(tempSlot);

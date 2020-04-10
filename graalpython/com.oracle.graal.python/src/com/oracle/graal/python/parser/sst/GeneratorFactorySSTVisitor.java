@@ -83,6 +83,7 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.source.Source;
 
 public class GeneratorFactorySSTVisitor extends FactorySSTVisitor {
@@ -327,7 +328,7 @@ public class GeneratorFactorySSTVisitor extends FactorySSTVisitor {
         GetIteratorExpressionNode getIterator = nodeFactory.createGetIterator(iterator);
         getIterator.assignSourceSection(iterator.getSourceSection());
         StatementNode forNode = oldNumOfActiveFlags == numOfActiveFlags
-                        ? new ForNode(body, makeWriteNode((ExpressionNode) target), getIterator)
+                        ? new ForNode(body, makeWriteNode((ExpressionNode) target), getIterator, allocateTempLocalVariable(FrameSlotKind.Object))
                         : GeneratorForNode.create((WriteNode) makeWriteNode((ExpressionNode) target), getIterator, body, numOfGeneratorForNode++);
         // TODO: Do we need to create the ElseNode, even if the else branch is empty?
         StatementNode elseBranch = node.elseStatement == null ? nodeFactory.createBlock(new StatementNode[0]) : (StatementNode) node.elseStatement.accept(this);

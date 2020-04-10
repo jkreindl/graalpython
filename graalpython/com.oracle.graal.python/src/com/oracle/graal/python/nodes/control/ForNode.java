@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
  * Copyright (c) 2013, Regents of the University of California
  *
  * All rights reserved.
@@ -30,54 +30,50 @@ import com.oracle.graal.python.builtins.objects.iterator.PDoubleIterator;
 import com.oracle.graal.python.builtins.objects.iterator.PIntegerIterator;
 import com.oracle.graal.python.builtins.objects.iterator.PLongIterator;
 import com.oracle.graal.python.nodes.PNodeWithContext;
-import com.oracle.graal.python.nodes.PRaiseNode;
 import com.oracle.graal.python.nodes.SpecialMethodNames;
 import com.oracle.graal.python.nodes.expression.ExpressionNode;
+import com.oracle.graal.python.nodes.frame.ReadLocalVariableNode;
+import com.oracle.graal.python.nodes.frame.WriteLocalVariableNode;
 import com.oracle.graal.python.nodes.frame.WriteNode;
+import com.oracle.graal.python.nodes.instrumentation.NodeObjectDescriptor;
 import com.oracle.graal.python.nodes.object.IsBuiltinClassProfile;
 import com.oracle.graal.python.nodes.statement.StatementNode;
 import com.oracle.graal.python.runtime.PythonContext;
 import com.oracle.graal.python.runtime.PythonOptions;
 import com.oracle.graal.python.runtime.exception.PException;
-import com.oracle.graal.python.runtime.exception.PythonErrorType;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.AnalysisTags;
+import com.oracle.truffle.api.instrumentation.GenerateWrapper;
+import com.oracle.truffle.api.instrumentation.InstrumentableNode;
+import com.oracle.truffle.api.instrumentation.ProbeNode;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RepeatingNode;
+import com.oracle.truffle.api.source.SourceSection;
 
 final class ForRepeatingNode extends PNodeWithContext implements RepeatingNode {
 
-    @CompilationFinal FrameSlot iteratorSlot;
     @CompilationFinal private ContextReference<PythonContext> contextRef;
     @Child ForNextElementNode nextElement;
     @Child StatementNode body;
-    @Child PRaiseNode raise;
 
-    public ForRepeatingNode(StatementNode target, StatementNode body) {
-        this.nextElement = ForNextElementNodeGen.create(target);
+    public ForRepeatingNode(StatementNode target, StatementNode body, final FrameSlot iteratorSlot) {
+        this.nextElement = ForNextElementNodeGen.create(target, ReadLocalVariableNode.create(iteratorSlot));
         this.body = body;
     }
 
     public boolean executeRepeating(VirtualFrame frame) {
-        try {
-            if (!nextElement.execute(frame, frame.getObject(iteratorSlot))) {
-                return false;
-            }
-        } catch (FrameSlotTypeException e) {
-            if (raise == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                raise = insert(PRaiseNode.create());
-            }
-            throw raise.raise(PythonErrorType.RuntimeError, "internal error: unexpected frame slot type");
+        if (!nextElement.execute(frame)) {
+            return false;
         }
         body.executeVoid(frame);
         if (contextRef == null) {
@@ -87,18 +83,32 @@ final class ForRepeatingNode extends PNodeWithContext implements RepeatingNode {
         contextRef.get().triggerAsyncActions(frame, this);
         return true;
     }
+
+    void assignSourceSection(SourceSection sourceSection) {
+        nextElement.assignSourceSection(sourceSection);
+    }
 }
 
 @ImportStatic({PythonOptions.class, SpecialMethodNames.class})
-abstract class ForNextElementNode extends PNodeWithContext {
+@NodeChild(value = "iterator", type = ExpressionNode.class)
+@GenerateWrapper
+abstract class ForNextElementNode extends PNodeWithContext implements InstrumentableNode {
 
     @Child StatementNode target;
+
+    private SourceSection sourceSection;
 
     public ForNextElementNode(StatementNode target) {
         this.target = target;
     }
 
-    public abstract boolean execute(VirtualFrame frame, Object range);
+    public ForNextElementNode(ForNextElementNode other) {
+        this((StatementNode) null);
+    }
+
+    public abstract boolean execute(VirtualFrame frame);
+
+    public abstract ExpressionNode getIterator();
 
     /*
      * There's a limited number of iterator types - specialize to all of them.
@@ -152,19 +162,54 @@ abstract class ForNextElementNode extends PNodeWithContext {
             return false;
         }
     }
+
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return target.hasTag(tag);
+    }
+
+    @Override
+    public Object getNodeObject() {
+        return target.getNodeObject();
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        return sourceSection;
+    }
+
+    @Override
+    public boolean isInstrumentable() {
+        return getSourceSection() != null;
+    }
+
+    @Override
+    public WrapperNode createWrapper(ProbeNode probe) {
+        return new ForNextElementNodeWrapper(this, this, probe);
+    }
+
+    void assignSourceSection(SourceSection sourceSection) {
+        // instrument this node instead the target so that the input event
+        // from reading the iterator has a proper parent
+        this.sourceSection = sourceSection;
+        target.clearSourceSection();
+        getIterator().assignSourceSection(sourceSection);
+    }
 }
 
 @NodeInfo(shortName = "for")
-public final class ForNode extends LoopNode {
+public final class ForNode extends LoopNode implements InstrumentableControlFlow {
 
-    @CompilationFinal private FrameSlot iteratorSlot;
+    private final FrameSlot iteratorSlot;
 
     @Child private com.oracle.truffle.api.nodes.LoopNode loopNode;
-    @Child private ExpressionNode iterator;
+    @Child private WriteLocalVariableNode setIteratorNode;
 
-    public ForNode(StatementNode body, StatementNode target, ExpressionNode iterator) {
-        this.iterator = iterator;
-        this.loopNode = Truffle.getRuntime().createLoopNode(new ForRepeatingNode(target, body));
+    public ForNode(StatementNode body, StatementNode target, ExpressionNode iterator, FrameSlot iteratorSlot) {
+        final ForRepeatingNode repeatingNode = new ForRepeatingNode(target, body, iteratorSlot);
+        this.loopNode = Truffle.getRuntime().createLoopNode(repeatingNode);
+        this.iteratorSlot = iteratorSlot;
+        setIteratorNode = WriteLocalVariableNode.create(iteratorSlot, iterator);
     }
 
     public StatementNode getTarget() {
@@ -172,7 +217,7 @@ public final class ForNode extends LoopNode {
     }
 
     public ExpressionNode getIterator() {
-        return iterator;
+        return setIteratorNode.getRhs();
     }
 
     @Override
@@ -182,16 +227,33 @@ public final class ForNode extends LoopNode {
 
     @Override
     public void executeVoid(VirtualFrame frame) {
-        if (iteratorSlot == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            iteratorSlot = frame.getFrameDescriptor().addFrameSlot(new Object(), FrameSlotKind.Object);
-            ((ForRepeatingNode) loopNode.getRepeatingNode()).iteratorSlot = iteratorSlot;
-        }
-        frame.setObject(iteratorSlot, iterator.execute(frame));
+        setIteratorNode.executeVoid(frame);
         try {
             loopNode.execute(frame);
         } finally {
             frame.setObject(iteratorSlot, null);
         }
+    }
+
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return tag == AnalysisTags.ControlFlowBranchTag.class || super.hasTag(tag);
+    }
+
+    @Override
+    public Object getNodeObject() {
+        return NodeObjectDescriptor.createNodeObjectDescriptor(AnalysisTags.ControlFlowBranchTag.METADATA_KEY_TYPE, AnalysisTags.ControlFlowBranchTag.Type.Loop.name());
+    }
+
+    @Override
+    public void assignSourceSection(SourceSection source) {
+        // instrument the write to the iterator slot
+        setIteratorNode.assignSourceSection(source);
+
+        // instrument the update of the loop variable
+        getTarget().assignSourceSection(source);
+
+        // instrument the read of the iterator to update the loop variable
+        ((ForRepeatingNode) loopNode.getRepeatingNode()).assignSourceSection(source);
     }
 }
