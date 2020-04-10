@@ -32,7 +32,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.AnalysisTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 
-public final class IfNode extends StatementNode {
+public final class IfNode extends StatementNode implements InstrumentableControlFlow {
 
     @Child private CoerceToBooleanNode condition;
     @Child private StatementNode then;

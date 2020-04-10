@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
  * Copyright (c) 2013, Regents of the University of California
  *
  * All rights reserved.
@@ -27,6 +27,7 @@ package com.oracle.graal.python.nodes.control;
 
 import com.oracle.graal.python.nodes.statement.StatementNode;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.Tag;
 
 public final class ElseNode extends StatementNode {
 
@@ -50,5 +51,21 @@ public final class ElseNode extends StatementNode {
     public void executeVoid(VirtualFrame frame) {
         then.executeVoid(frame);
         orelse.executeVoid(frame);
+    }
+
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        if (then instanceof InstrumentableControlFlow && then.hasTag(tag)) {
+            return true;
+        }
+        return super.hasTag(tag);
+    }
+
+    @Override
+    public Object getNodeObject() {
+        if (then instanceof InstrumentableControlFlow) {
+            return then.getNodeObject();
+        }
+        return super.getNodeObject();
     }
 }
